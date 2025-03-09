@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Luke's Grotti Parts Cost Calculator</title>
+    <title>Grotti Parts Cost Calculator</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -160,8 +160,17 @@
 
         let defaultQuantities = {};
 
+        // Toggle Dark Mode and save to localStorage
         function toggleDarkMode() {
             document.body.classList.toggle("dark-mode");
+            localStorage.setItem('darkMode', document.body.classList.contains("dark-mode"));
+        }
+
+        // Set Dark Mode based on localStorage
+        function setDarkMode() {
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.body.classList.add("dark-mode");
+            }
         }
 
         // Save the initial required quantities
@@ -227,21 +236,29 @@
             });
         }
 
-        // Reset the form to default quantities
-        function resetForm() {
-            partsData.forEach(part => {
-                const quantityInput = document.getElementById(`quantity-mod-${part.part}`);
-                if (quantityInput) {
-                    // Reset only the quantity to the default, not the modified ones
-                    quantityInput.value = defaultQuantities[part.part];
-                }
-            });
-
-            updateSelectedParts();
+function resetForm() {
+    partsData.forEach(part => {
+        const quantityInput = document.getElementById(`quantity-mod-${part.part}`);
+        const checkbox = document.getElementById(`mod-${part.part}`);
+        
+        if (quantityInput) {
+            // Reset quantity to default value
+            quantityInput.value = defaultQuantities[part.part];
         }
+
+        if (checkbox) {
+            // Reset checkbox state
+            checkbox.checked = false;
+        }
+    });
+
+    updateSelectedParts(); // Recalculate total and update the display
+	}
+	
 
         // Call to initialize parts on page load
         window.onload = function() {
+            setDarkMode();  // Set Dark Mode if previously enabled
             saveDefaultQuantities();
             initializePartsList();
         };
