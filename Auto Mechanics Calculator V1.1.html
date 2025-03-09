@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grotti Parts Cost Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: white;
+            color: black;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        .dark-mode {
+            background-color: #121212;
+            color: white;
+        }
+        .container {
+            max-width: 100%;
+            width: 100%;
+            margin: auto;
+            padding: 0 15px;
+        }
+        h2 {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #f4a742;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        button:focus {
+            outline: none;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f4a742;
+        }
+        .parts-list {
+            margin-bottom: 20px;
+        }
+        .part-category {
+            margin-bottom: 10px;
+        }
+        .part-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            justify-content: space-between;
+        }
+        .part-item input[type="number"], .part-item input[type="checkbox"] {
+            width: 40px;
+            height: 40px;
+        }
+        .summary-text {
+            margin-top: 20px;
+            font-size: 18px;
+            text-align: center;
+        }
+        .output {
+            font-size: 18px;
+            text-align: center;
+            margin-top: 10px;
+        }
+        @media (max-width: 600px) {
+            button {
+                width: 100%;
+                font-size: 18px;
+            }
+            .part-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .part-item input[type="number"], .part-item input[type="checkbox"] {
+                width: 60px;
+                height: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Parts Cost Calculator</h2>
+        <button onclick="toggleDarkMode()">Toggle Dark Mode</button>
+        <form id="partsForm">
+            <div class="parts-list">
+                <h3>Modification Parts</h3>
+                <div id="modsList" class="part-category"></div>
+                <h3>Service Parts</h3>
+                <div id="serviceList" class="part-category"></div>
+            </div>
+            <label style="display: block; text-align: center; margin-bottom: 20px;">
+                <input type="checkbox" id="staffDiscount" onchange="updateSelectedParts()" style="width: 20px; height: 20px;">
+                Apply Staff Pricing
+            </label>
+            <button type="button" onclick="updateSelectedParts()">Calculate Total</button>
+        </form>
+        
+        <div class="output" id="output"></div>
+
+        <h3>Total Cost: $<span id="totalCost">0.00</span></h3>
+        <div id="summaryText" class="summary-text"></div>
+    </div>
+    
+    <script>
+        const partsData = [
+            { part: 'Turbo Charger', retailPrice: 5000, employeePrice: 3500, category: 'Modification', requiredQuantity: 1 },
+            { part: 'Ceramic Brakes', retailPrice: 5000, employeePrice: 3000, category: 'Modification', requiredQuantity: 1 },
+            { part: 'Lighting Control', retailPrice: 350, employeePrice: 275, category: 'Modification', requiredQuantity: 1 },
+            { part: 'Stancing Kit', retailPrice: 3000, employeePrice: 2500, category: 'Modification', requiredQuantity: 1 },
+            { part: 'Cosmetic Part', retailPrice: 750, employeePrice: 550, category: 'Modification', requiredQuantity: 1 },
+            { part: 'Respray Kit', retailPrice: 500, employeePrice: 300, category: 'Modification', requiredQuantity: 1 },
+            { part: 'Wheels', retailPrice: 1000, employeePrice: 800, category: 'Modification', requiredQuantity: 1 },
+            { part: 'Tire Smoke kit', retailPrice: 300, employeePrice: 250, category: 'Modification', requiredQuantity: 1 },
+            { part: 'Repair Kit', retailPrice: 275, employeePrice: 200, category: 'Modification', requiredQuantity: 1 },
+            { part: 'Duct Tape', retailPrice: 150, employeePrice: 120, category: 'Modification', requiredQuantity: 1 },
+            { part: 'Extras Kits', retailPrice: 150, employeePrice: 120, category: 'Modification', requiredQuantity: 1 },
+            { part: 'Drift tune kit', retailPrice: 6000, employeePrice: 5000, category: 'Modification', requiredQuantity: 1 },
+            { part: 'Semi Slick Tires', retailPrice: 5500, employeePrice: 4500, category: 'Modification', requiredQuantity: 1 },
+            { part: 'Slick Tires', retailPrice: 7000, employeePrice: 6000, category: 'Modification', requiredQuantity: 1 },
+            { part: 'Off Road Tires', retailPrice: 6500, employeePrice: 5000, category: 'Modification', requiredQuantity: 1 },
+            { part: 'FWD Drivetrain', retailPrice: 4000, employeePrice: 2500, category: 'Modification', requiredQuantity: 1 },
+            { part: 'RWD Drivetrain', retailPrice: 4000, employeePrice: 3000, category: 'Modification', requiredQuantity: 1 },
+            { part: 'AWD Drivetrain', retailPrice: 5000, employeePrice: 4500, category: 'Modification', requiredQuantity: 1 },
+            { part: 'EV Coolant', retailPrice: 40, employeePrice: 30, category: 'Modification', requiredQuantity: 1 },
+            { part: 'EV Battery', retailPrice: 3000, employeePrice: 2000, category: 'Modification', requiredQuantity: 1 },
+            { part: 'EV Motor', retailPrice: 3500, employeePrice: 2700, category: 'Modification', requiredQuantity: 1 },
+            { part: 'Preformance Parts', retailPrice: 250, employeePrice: 150, category: 'Modification', requiredQuantity: 1 },
+            { part: 'Manual Transmission', retailPrice: 2500, employeePrice: 2000, category: 'Modification', requiredQuantity: 1 },
+
+            { part: 'Engine Oil', retailPrice: 75, employeePrice: 45, category: 'Service', requiredQuantity: 1 },
+            { part: 'Tire Replace', retailPrice: 200, employeePrice: 150, category: 'Service', requiredQuantity: 4 },
+            { part: 'Clutch Replace', retailPrice: 300, employeePrice: 250, category: 'Service', requiredQuantity: 1 },
+            { part: 'Air Filter', retailPrice: 100, employeePrice: 75, category: 'Service', requiredQuantity: 1 },
+            { part: 'Spark Plug', retailPrice: 25, employeePrice: 18, category: 'Service', requiredQuantity: 4 },
+            { part: 'Suspension Parts', retailPrice: 400, employeePrice: 200, category: 'Service', requiredQuantity: 1 },
+            { part: 'Brake Pad Replace', retailPrice: 320, employeePrice: 220, category: 'Service', requiredQuantity: 4 },
+        ];
+
+        function toggleDarkMode() {
+            document.body.classList.toggle("dark-mode");
+        }
+
+        // Update selected parts and calculate total
+        function updateSelectedParts() {
+            let totalCost = 0;
+            let outputDiv = document.getElementById('output');
+            let summaryText = document.getElementById('summaryText');
+            outputDiv.innerHTML = ''; // Clear previous output
+
+            let selectedParts = [];
+            partsData.forEach(part => {
+                const checkbox = document.getElementById(`mod-${part.part}`);
+                const quantityInput = document.getElementById(`quantity-mod-${part.part}`);
+                
+                if (checkbox && checkbox.checked && quantityInput) {
+                    // Check if staff discount is applied
+                    let price = document.getElementById('staffDiscount').checked ? part.employeePrice : part.retailPrice;
+                    let quantity = parseInt(quantityInput.value);
+                    let totalPartCost = price * quantity;
+
+                    selectedParts.push(`${part.part} (x${quantity})`);
+                    totalCost += totalPartCost; // Sum up total cost
+                }
+            });
+
+            // Display the selected parts in a single line with a separator
+            if (selectedParts.length > 0) {
+                outputDiv.innerHTML = selectedParts.join(', ') + ` | Total: $${totalCost.toFixed(2)}`;
+            } else {
+                outputDiv.innerHTML = `No parts selected.`;
+            }
+
+            // Update the total cost
+            document.getElementById('totalCost').innerText = totalCost.toFixed(2);
+            summaryText.innerText = `${selectedParts.length} parts selected.`;
+        }
+
+        // Initialize the parts list (populating the form with checkboxes and quantities)
+        function initializePartsList() {
+            const modsList = document.getElementById('modsList');
+            const serviceList = document.getElementById('serviceList');
+
+            partsData.forEach(part => {
+                const partItem = document.createElement('div');
+                partItem.classList.add('part-item');
+                partItem.innerHTML = `
+                    <input type="checkbox" id="mod-${part.part}" onchange="updateSelectedParts()"> ${part.part} - $${part.retailPrice}
+                    <input type="number" id="quantity-mod-${part.part}" value="${part.requiredQuantity}" min="1" onchange="updateSelectedParts()" style="width: 60px;">
+                `;
+
+                if (part.category === 'Modification') {
+                    modsList.appendChild(partItem);
+                } else if (part.category === 'Service') {
+                    serviceList.appendChild(partItem);
+                }
+            });
+        }
+
+        // Call to initialize parts on page load
+        window.onload = function() {
+            initializePartsList();
+        };
+    </script>
+</body>
+</html>
