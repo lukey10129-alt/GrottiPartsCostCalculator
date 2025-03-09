@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grotti Parts Cost Calculator</title>
+    <title>Luke's Grotti Parts Cost Calculator</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -114,6 +114,7 @@
                 Apply Staff Pricing
             </label>
             <button type="button" onclick="updateSelectedParts()">Calculate Total</button>
+            <button type="button" onclick="resetForm()">Reset</button>
         </form>
         
         <div class="output" id="output"></div>
@@ -157,8 +158,17 @@
             { part: 'Brake Pad Replace', retailPrice: 320, employeePrice: 220, category: 'Service', requiredQuantity: 4 },
         ];
 
+        let defaultQuantities = {};
+
         function toggleDarkMode() {
             document.body.classList.toggle("dark-mode");
+        }
+
+        // Save the initial required quantities
+        function saveDefaultQuantities() {
+            partsData.forEach(part => {
+                defaultQuantities[part.part] = part.requiredQuantity;
+            });
         }
 
         // Update selected parts and calculate total
@@ -204,7 +214,7 @@
             partsData.forEach(part => {
                 const partItem = document.createElement('div');
                 partItem.classList.add('part-item');
-                partItem.innerHTML = `
+                partItem.innerHTML = ` 
                     <input type="checkbox" id="mod-${part.part}" onchange="updateSelectedParts()"> ${part.part} - $${part.retailPrice}
                     <input type="number" id="quantity-mod-${part.part}" value="${part.requiredQuantity}" min="1" onchange="updateSelectedParts()" style="width: 60px;">
                 `;
@@ -217,8 +227,22 @@
             });
         }
 
+        // Reset the form to default quantities
+        function resetForm() {
+            partsData.forEach(part => {
+                const quantityInput = document.getElementById(`quantity-mod-${part.part}`);
+                if (quantityInput) {
+                    // Reset only the quantity to the default, not the modified ones
+                    quantityInput.value = defaultQuantities[part.part];
+                }
+            });
+
+            updateSelectedParts();
+        }
+
         // Call to initialize parts on page load
         window.onload = function() {
+            saveDefaultQuantities();
             initializePartsList();
         };
     </script>
